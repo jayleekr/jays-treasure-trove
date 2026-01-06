@@ -14,8 +14,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/build.py\" ]; then cd \"$CLAUDE_PROJECT_DIR\" && python build.py -fac 2>/dev/null || true; fi",
-            "timeout": 120
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/run-dev-container.sh\" ] && [ -f \"$CLAUDE_PROJECT_DIR/build.py\" ]; then cd \"$CLAUDE_PROJECT_DIR\" && ./run-dev-container.sh -x 'python build.py -fac' 2>/dev/null || true; elif [ -f \"$CLAUDE_PROJECT_DIR/build.py\" ]; then cd \"$CLAUDE_PROJECT_DIR\" && python build.py -fac 2>/dev/null || true; fi",
+            "timeout": 180
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(./run-dev-container.sh*build.py*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./run-dev-container.sh -x 'python build.py -fac' 2>/dev/null || true",
+            "timeout": 180
           }
         ]
       }
