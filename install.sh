@@ -64,28 +64,74 @@ if [[ ! -f "$HOME/.env" ]]; then
     echo "  cp $INSTALL_DIR/.env.template ~/.env"
     echo "  vi ~/.env  # Add your credentials"
     echo
+    ENV_EXISTS=false
 else
     log_ok "~/.env exists"
+    ENV_EXISTS=true
 fi
 
-# Show available projects
-echo
-echo "========================================"
-log_ok "Installation complete!"
-echo "========================================"
-echo
-echo "Location: $INSTALL_DIR"
-echo
-echo "Available projects:"
-if [[ -d "$INSTALL_DIR/projects" ]]; then
-    ls -1 "$INSTALL_DIR/projects/" 2>/dev/null | sed 's/^/  - /'
+# Auto-detect project from current directory
+detect_project() {
+    local current_dir="$PWD"
+
+    # Check path patterns for known projects
+    if [[ "$current_dir" == *"CCU_GEN2.0_SONATUS"* ]]; then
+        # Find the root of CCU_GEN2.0_SONATUS project
+        local project_root="$current_dir"
+        while [[ "$project_root" != "/" ]]; do
+            if [[ "$(basename "$project_root")" == *"CCU_GEN2.0_SONATUS"* ]]; then
+                echo "ccu2-yocto:$project_root"
+                return 0
+            fi
+            project_root="$(dirname "$project_root")"
+        done
+    fi
+
+    if [[ "$current_dir" == *"ccu-2.0"* ]] || [[ "$current_dir" == *"ccu2.0"* ]]; then
+        local project_root="$current_dir"
+        while [[ "$project_root" != "/" ]]; do
+            if [[ "$(basename "$project_root")" == *"ccu-2.0"* ]] || [[ "$(basename "$project_root")" == *"ccu2.0"* ]]; then
+                echo "ccu2-host:$project_root"
+                return 0
+            fi
+            project_root="$(dirname "$project_root")"
+        done
+    fi
+
+    return 1
+}
+
+# Try auto-detection
+DETECTED=$(detect_project) || true
+
+if [[ -n "$DETECTED" ]] && [[ "$ENV_EXISTS" == "true" ]]; then
+    PROJECT_NAME="${DETECTED%%:*}"
+    PROJECT_PATH="${DETECTED#*:}"
+
+    echo
+    log_info "Detected project: $PROJECT_NAME"
+    log_info "Project path: $PROJECT_PATH"
+    echo
+
+    # Auto-configure the project
+    "$INSTALL_DIR/setup-project.sh" "$PROJECT_NAME" "$PROJECT_PATH"
 else
-    echo "  (none found)"
+    # Show available projects (manual mode)
+    echo
+    echo "========================================"
+    log_ok "Installation complete!"
+    echo "========================================"
+    echo
+    echo "Location: $INSTALL_DIR"
+    echo
+    echo "Available projects:"
+    if [[ -d "$INSTALL_DIR/projects" ]]; then
+        ls -1 "$INSTALL_DIR/projects/" 2>/dev/null | sed 's/^/  - /'
+    else
+        echo "  (none found)"
+    fi
+    echo
+    echo "To configure a project, run from project directory:"
+    echo "  $INSTALL_DIR/setup-project.sh <project-name> ."
+    echo
 fi
-echo
-echo "To configure a project:"
-echo "  $INSTALL_DIR/setup-project.sh <project-name> <project-path>"
-echo
-echo "Or use one-liner:"
-echo "  curl -fsSL https://raw.githubusercontent.com/jayleekr/jays-treasure-trove/main/setup-project.sh | bash -s -- <project-name> <project-path>"
-echo
