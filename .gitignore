@@ -1,0 +1,42 @@
+# Environment & Credentials (NEVER commit)
+.env
+!.env.template
+.credentials.json
+**/credentials*.json
+**/*secret*
+**/*token*
+
+# Machine-local Claude data
+history.jsonl
+stats-cache.json
+.update_check
+todos/
+debug/
+file-history/
+telemetry/
+statsig/
+session-env/
+plans/
+shell-snapshots/
+logs/
+plugins/
+backups/
+ide/
+downloads/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+*~
+
+# Editor artifacts
+*.swp
+*.swo
+.idea/
+.vscode/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
