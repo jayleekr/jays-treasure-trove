@@ -4,6 +4,7 @@
 # Centralized Claude Code configuration management
 #
 # Usage:
+#   cd ~/your-project
 #   curl -fsSL https://raw.githubusercontent.com/jayleekr/jays-treasure-trove/main/install.sh | bash
 #
 
@@ -37,7 +38,7 @@ command -v git >/dev/null 2>&1 || {
     exit 1
 }
 
-# Clone or update repo
+# Step 1: Clone or update repo
 if [[ -d "$INSTALL_DIR/.git" ]]; then
     log_info "Updating existing installation..."
     (cd "$INSTALL_DIR" && git pull --ff-only) || {
@@ -52,10 +53,9 @@ else
         exit 1
     }
 fi
-
 log_ok "Repository ready at $INSTALL_DIR"
 
-# Check ~/.env
+# Step 2: Check ~/.env
 echo
 if [[ ! -f "$HOME/.env" ]]; then
     log_warn "~/.env not found!"
@@ -70,68 +70,92 @@ else
     ENV_EXISTS=true
 fi
 
-# Auto-detect project from current directory
-detect_project() {
+# Step 3: Auto-detect project from current directory
+detect_project_root() {
     local current_dir="$PWD"
 
-    # Check path patterns for known projects
+    # CCU_GEN2.0_SONATUS (Yocto build)
     if [[ "$current_dir" == *"CCU_GEN2.0_SONATUS"* ]]; then
-        # Find the root of CCU_GEN2.0_SONATUS project
-        local project_root="$current_dir"
-        while [[ "$project_root" != "/" ]]; do
-            if [[ "$(basename "$project_root")" == *"CCU_GEN2.0_SONATUS"* ]]; then
-                echo "ccu2-yocto:$project_root"
+        local dir="$current_dir"
+        while [[ "$dir" != "/" ]]; do
+            if [[ "$(basename "$dir")" == *"CCU_GEN2.0_SONATUS"* ]]; then
+                echo "$dir"
                 return 0
             fi
-            project_root="$(dirname "$project_root")"
+            dir="$(dirname "$dir")"
         done
     fi
 
+    # ccu-2.0 (Host build)
     if [[ "$current_dir" == *"ccu-2.0"* ]] || [[ "$current_dir" == *"ccu2.0"* ]]; then
-        local project_root="$current_dir"
-        while [[ "$project_root" != "/" ]]; do
-            if [[ "$(basename "$project_root")" == *"ccu-2.0"* ]] || [[ "$(basename "$project_root")" == *"ccu2.0"* ]]; then
-                echo "ccu2-host:$project_root"
+        local dir="$current_dir"
+        while [[ "$dir" != "/" ]]; do
+            if [[ "$(basename "$dir")" == *"ccu-2.0"* ]] || [[ "$(basename "$dir")" == *"ccu2.0"* ]]; then
+                echo "$dir"
                 return 0
             fi
-            project_root="$(dirname "$project_root")"
+            dir="$(dirname "$dir")"
         done
     fi
 
     return 1
 }
 
-# Try auto-detection
-DETECTED=$(detect_project) || true
+PROJECT_ROOT=$(detect_project_root) || true
 
-if [[ -n "$DETECTED" ]] && [[ "$ENV_EXISTS" == "true" ]]; then
-    PROJECT_NAME="${DETECTED%%:*}"
-    PROJECT_PATH="${DETECTED#*:}"
+# Step 4: Create symlinks if project detected and env exists
+if [[ -n "$PROJECT_ROOT" ]] && [[ "$ENV_EXISTS" == "true" ]]; then
+    echo
+    log_info "Detected project: $PROJECT_ROOT"
 
-    echo
-    log_info "Detected project: $PROJECT_NAME"
-    log_info "Project path: $PROJECT_PATH"
-    echo
+    # Create .env symlink
+    ENV_TARGET="$PROJECT_ROOT/.env"
+    [[ -L "$ENV_TARGET" ]] && rm "$ENV_TARGET"
+    [[ -f "$ENV_TARGET" ]] && rm "$ENV_TARGET"
+    ln -sf "$HOME/.env" "$ENV_TARGET"
+    log_ok ".env → ~/.env"
 
-    # Auto-configure the project
-    "$INSTALL_DIR/setup-project.sh" "$PROJECT_NAME" "$PROJECT_PATH"
-else
-    # Show available projects (manual mode)
-    echo
-    echo "========================================"
-    log_ok "Installation complete!"
-    echo "========================================"
-    echo
-    echo "Location: $INSTALL_DIR"
-    echo
-    echo "Available projects:"
-    if [[ -d "$INSTALL_DIR/projects" ]]; then
-        ls -1 "$INSTALL_DIR/projects/" 2>/dev/null | sed 's/^/  - /'
-    else
-        echo "  (none found)"
+    # Create .claude symlink
+    CLAUDE_TARGET="$PROJECT_ROOT/.claude"
+    if [[ -d "$CLAUDE_TARGET" ]] && [[ ! -L "$CLAUDE_TARGET" ]]; then
+        BACKUP="$CLAUDE_TARGET.backup.$(date +%Y%m%d_%H%M%S)"
+        log_warn "Backing up existing .claude/ to $BACKUP"
+        mv "$CLAUDE_TARGET" "$BACKUP"
     fi
+    [[ -L "$CLAUDE_TARGET" ]] && rm "$CLAUDE_TARGET"
+    ln -sf "$INSTALL_DIR/projects/common" "$CLAUDE_TARGET"
+    log_ok ".claude/ → $INSTALL_DIR/projects/common/"
+
     echo
-    echo "To configure a project, run from project directory:"
-    echo "  $INSTALL_DIR/setup-project.sh <project-name> ."
+    echo "========================================"
+    log_ok "Setup complete!"
+    echo "========================================"
+    echo
+    echo "Project: $PROJECT_ROOT"
+    echo "  .env    → ~/.env"
+    echo "  .claude → $INSTALL_DIR/projects/common/"
+    echo
+
+elif [[ -z "$PROJECT_ROOT" ]]; then
+    echo
+    echo "========================================"
+    log_warn "No project detected"
+    echo "========================================"
+    echo
+    echo "Run this script from inside a supported project directory:"
+    echo "  cd ~/CCU_GEN2.0_SONATUS.manifest && bash $INSTALL_DIR/install.sh"
+    echo "  cd ~/ccu-2.0 && bash $INSTALL_DIR/install.sh"
+    echo
+
+else
+    echo
+    echo "========================================"
+    log_warn "Setup incomplete - ~/.env required"
+    echo "========================================"
+    echo
+    echo "Create ~/.env first, then re-run:"
+    echo "  cp $INSTALL_DIR/.env.template ~/.env"
+    echo "  vi ~/.env"
+    echo "  bash $INSTALL_DIR/install.sh"
     echo
 fi

@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "Bash(rm:*)",
+      "Bash(grep:*)",
       "Bash(find:*)"
     ],
     "deny": []
@@ -12,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && python build.py -fac 2>/dev/null || true",
+            "command": "if [ -f \"$CLAUDE_PROJECT_DIR/build.py\" ]; then cd \"$CLAUDE_PROJECT_DIR\" && python build.py -fac 2>/dev/null || true; fi",
             "timeout": 120
           }
         ]
