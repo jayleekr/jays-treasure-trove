@@ -118,7 +118,41 @@ CMAKE_CHANGED=$(git diff --name-only $REMOTE/$BASE_BRANCH..HEAD | grep -c "CMake
 MODULES=$(git diff --name-only $REMOTE/$BASE_BRANCH..HEAD | cut -d'/' -f1 | sort -u | wc -l)
 ```
 
-### 5. Pre-flight Checks
+### 5. Code Formatting (Mandatory)
+
+**IMPORTANT**: Always apply code formatting before PR creation to pass Jenkins checks.
+
+```bash
+# Apply clang-format to changed files (Docker container required)
+echo "🔧 Applying code formatting..."
+./run-dev-container.sh -x "python build.py -fac --can-db-version 253Q" 2>/dev/null || \
+./run-dev-container.sh -x "python build.py --module container-manager --clang-format-apply --can-db-version 253Q"
+
+# Check for formatting changes
+FORMAT_CHANGES=$(git diff --name-only | wc -l)
+
+if [[ "$FORMAT_CHANGES" -gt 0 ]]; then
+  echo "📝 Format changes detected in $FORMAT_CHANGES file(s)"
+  git diff --stat
+
+  # Auto-commit format changes
+  git add -u
+  git commit -m "[${TICKET_ID}] Apply code formatting
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+
+  echo "✅ Format changes committed"
+else
+  echo "✅ No format changes needed"
+fi
+```
+
+This step ensures:
+- Code passes Jenkins clang-format check
+- Formatting is applied before PR, not after (preventing CI failures)
+- Changes are auto-committed with proper ticket reference
+
+### 6. Pre-flight Checks
 
 ```bash
 # Check for unpushed commits
@@ -130,7 +164,7 @@ if [[ "$UNPUSHED" != "0" ]]; then
 fi
 ```
 
-### 6. PR Content Generation
+### 7. PR Content Generation
 
 Generate PR title:
 ```
@@ -159,7 +193,7 @@ Generate PR body using this template:
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-### 7. PR Creation
+### 8. PR Creation
 
 ```bash
 # Create Draft PR (default)
@@ -174,7 +208,7 @@ PR_URL=$(gh pr view --json url -q .url)
 
 Use `--web` to open in browser if requested.
 
-### 8. JIRA Integration
+### 9. JIRA Integration
 
 Post comment to JIRA ticket with PR URL:
 
@@ -229,6 +263,10 @@ Upon successful execution:
    ✅ Branch is up-to-date with master
    (or: ✅ Rebased 2 commits onto latest master)
 
+🔧 Applying code formatting...
+   ✅ No format changes needed
+   (or: 📝 Format changes in 2 file(s) - auto-committed)
+
 ✅ PR Created (Draft)
    URL: https://github.com/sonatus/container-manager/pull/XXX
    Title: [CCU2-18882] Description
@@ -244,6 +282,7 @@ Upon successful execution:
    - CMakeLists.txt: No changes
    - Cross-module: No
    - Sync status: Up-to-date
+   - Format check: ✅ Passed
 ```
 
 ## Error Handling
