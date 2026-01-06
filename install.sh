@@ -126,14 +126,26 @@ if [[ -n "$PROJECT_ROOT" ]] && [[ "$ENV_EXISTS" == "true" ]]; then
     ln -sf "$INSTALL_DIR/projects/common" "$CLAUDE_TARGET"
     log_ok ".claude/ → $INSTALL_DIR/projects/common/"
 
+    # Create CLAUDE.md symlink
+    CLAUDE_MD_TARGET="$PROJECT_ROOT/CLAUDE.md"
+    [[ -L "$CLAUDE_MD_TARGET" ]] && rm "$CLAUDE_MD_TARGET"
+    if [[ -f "$CLAUDE_MD_TARGET" ]]; then
+        BACKUP="$CLAUDE_MD_TARGET.backup.$(date +%Y%m%d_%H%M%S)"
+        log_warn "Backing up existing CLAUDE.md to $BACKUP"
+        mv "$CLAUDE_MD_TARGET" "$BACKUP"
+    fi
+    ln -sf "$INSTALL_DIR/PROJECT_CLAUDE.md" "$CLAUDE_MD_TARGET"
+    log_ok "CLAUDE.md → $INSTALL_DIR/PROJECT_CLAUDE.md"
+
     echo
     echo "========================================"
     log_ok "Setup complete!"
     echo "========================================"
     echo
     echo "Project: $PROJECT_ROOT"
-    echo "  .env    → ~/.env"
-    echo "  .claude → $INSTALL_DIR/projects/common/"
+    echo "  .env      → ~/.env"
+    echo "  .claude/  → $INSTALL_DIR/projects/common/"
+    echo "  CLAUDE.md → $INSTALL_DIR/PROJECT_CLAUDE.md"
     echo
 
 elif [[ -z "$PROJECT_ROOT" ]]; then

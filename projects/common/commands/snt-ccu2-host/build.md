@@ -356,3 +356,49 @@ rm -rf build/
 # Implementation 완료 후 빌드만 실행
 /snt-ccu2-host:build --module container-manager --tests
 ```
+
+## Automatic Code Formatting (Claude Hook)
+
+빌드 완료 후 코드 포맷팅이 자동으로 적용됩니다.
+
+### Hook 동작
+
+Claude Code의 PostToolUse hook이 다음 상황에서 자동 실행:
+- **Edit/Write 작업 후**: 파일 수정 후 포맷팅 적용
+- **빌드 완료 후**: `build.py` 실행 후 포맷팅 적용
+
+### 자동 실행 명령
+
+```bash
+./run-dev-container.sh -x 'python build.py -fac'
+```
+
+- `-f`: format (clang-format)
+- `-a`: apply (변경사항 적용)
+- `-c`: changed files only (변경된 파일만)
+
+### Hook 설정 위치
+
+`.claude/settings.local.json`:
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{ "command": "./run-dev-container.sh -x 'python build.py -fac'" }]
+      },
+      {
+        "matcher": "Bash(./run-dev-container.sh*build.py*)",
+        "hooks": [{ "command": "./run-dev-container.sh -x 'python build.py -fac'" }]
+      }
+    ]
+  }
+}
+```
+
+### 특징
+
+- **수동 실행 불필요**: hook이 자동 처리
+- **Docker 컨테이너 내 실행**: 일관된 clang-format 버전 사용
+- **변경 파일만 포맷팅**: `-c` 옵션으로 효율적 처리
