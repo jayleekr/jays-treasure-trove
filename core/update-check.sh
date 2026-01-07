@@ -28,7 +28,7 @@ should_check_updates() {
 # Function 2: Fetch remote changes with timeout
 fetch_remote_changes() {
     # 5-second timeout to prevent hanging
-    timeout 5 git fetch origin master 2>/dev/null
+    timeout 5 git fetch origin main 2>/dev/null
     return $?
 }
 
@@ -39,7 +39,7 @@ get_current_commit() {
 
 # Function 4: Get remote commit hash
 get_remote_commit() {
-    git rev-parse --short origin/master 2>/dev/null
+    git rev-parse --short origin/main 2>/dev/null
 }
 
 # Function 5: Get list of changed commands/skills
