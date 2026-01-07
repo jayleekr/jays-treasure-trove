@@ -1,3 +1,10 @@
+<!-- Update Check Hook - DO NOT REMOVE -->
+```bash
+# Auto-check for jays-treasure-trove updates (once per day)
+source ~/.claude-config/core/update-check.sh 2>/dev/null || true
+```
+<!-- End Update Check Hook -->
+
 # Project Instructions
 
 ## Language Policy
