@@ -55,6 +55,7 @@ This project uses centralized Claude configuration from `jays-treasure-trove`.
 | `snt-ccu2-yocto` | Yocto embedded Linux development |
 | `snt-ccu2-host` | Host-based CCU2 development |
 | `misra-compliance-agent` | MISRA-C 2023 & CERT-CPP compliance |
+| `jira-workflow-agent` | JIRA ticket-based development pipeline automation (analyze → implement → build → PR) |
 
 ## Configuration
 
