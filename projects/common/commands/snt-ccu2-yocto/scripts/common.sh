@@ -18,6 +18,7 @@ NC='\033[0m'  # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 LOG_BASE_DIR="$PROJECT_ROOT/claudedocs/build-logs"
+TEMP_DIR="$PROJECT_ROOT/.claude/tmp"
 
 # ============================================================================
 # Logging Configuration
@@ -121,7 +122,8 @@ print_header() {
 run_logged() {
     local cmd="$1"
     local desc="${2:-Executing command}"
-    local temp_log=$(mktemp)
+    mkdir -p "$TEMP_DIR"
+    local temp_log="$TEMP_DIR/run_$(date +%s).log"
     local exit_code=0
 
     print_info "$desc"
@@ -174,6 +176,36 @@ finalize_logging() {
 is_in_container() {
     [ -f /.dockerenv ] && return 0
     return 1
+}
+
+# Get the yocto container name for this project
+get_yocto_container() {
+    local project_path="$PROJECT_ROOT"
+    # Container naming: replace leading / and all / with _, append -yocto-ccu-2.0
+    # Example: /home/jay.lee/CCU_GEN2.0_SONATUS.manifest -> home_jay.lee_CCU_GEN2.0_SONATUS.manifest-yocto-ccu-2.0
+    local container_name=$(echo "$project_path" | sed 's|^/||' | tr '/' '_')
+    container_name="${container_name}-yocto-ccu-2.0"
+
+    # Check if container exists and is running
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${container_name}$"; then
+        echo "$container_name"
+        return 0
+    fi
+    return 1
+}
+
+# Execute command in yocto container via docker exec
+exec_in_container() {
+    local cmd="$1"
+    local container=$(get_yocto_container)
+
+    if [ -n "$container" ]; then
+        docker exec -u "$(id -u):$(id -g)" "$container" bash -c "$cmd"
+        return $?
+    else
+        print_error "Yocto container not found. Please run: ./run-dev-container.sh"
+        return 1
+    fi
 }
 
 # Get elapsed time in human readable format
