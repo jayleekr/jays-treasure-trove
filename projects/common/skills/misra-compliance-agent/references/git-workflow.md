@@ -35,28 +35,28 @@ The recommended workflow uses two branches to maintain line number stability dur
 git checkout -b <base-branch-name>
 
 # Example: Use feature branch or create new
-git checkout -b feature/misra-compliance-base
+git checkout -b misra-compliance-base
 
 # 2. Ensure clean state matching violation report
 # If report was generated from specific commit:
 git reset --hard <commit-hash>
 
 # 3. Create output branch from base
-git checkout -b feature/misra-compliance-output
+git checkout -b misra-compliance-output
 
 # 4. Return to base for work
-git checkout feature/misra-compliance-base
+git checkout misra-compliance-base
 ```
 
 ### Naming Conventions
 
 Recommended branch names:
-- Base: `feature/misra-<module>-base`
-- Output: `feature/misra-<module>-output`
+- Base: `misra-<module>-base`
+- Output: `misra-<module>-output`
 
 Examples:
-- `feature/misra-cm-base` / `feature/misra-cm-output`
-- `compliance/container-manager-base` / `compliance/container-manager-output`
+- `misra-cm-base` / `misra-cm-output`
+- `<TICKET_ID>-misra-container-manager-base` / `<TICKET_ID>-misra-container-manager-output`
 
 ## Iterative Suppression Workflow
 

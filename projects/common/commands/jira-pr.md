@@ -35,7 +35,7 @@ if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
 fi
 
 # Extract TICKET-ID from branch name
-# Pattern: feature/<TICKET_ID>-description or <TICKET_ID>-description
+# Pattern: <TICKET_ID>-description
 TICKET_ID=$(echo "$BRANCH" | grep -oE '(CCU2|SEB|CRM|OTA)-[0-9]+')
 ```
 
@@ -270,7 +270,7 @@ Upon successful execution:
 ✅ PR Created (Draft)
    URL: https://github.com/sonatus/container-manager/pull/XXX
    Title: [CCU2-18882] Description
-   Base: master ← feature/CCU2-18882-description
+   Base: master ← CCU2-18882-description
 
 ✅ JIRA Comment Added
    Ticket: CCU2-18882
@@ -291,7 +291,7 @@ Upon successful execution:
 |-------|------------|
 | `gh: command not found` | Install GitHub CLI: `brew install gh` or `sudo apt install gh` |
 | `gh: not authenticated` | Run `gh auth login` to authenticate |
-| `Not on feature branch` | Switch to feature branch: `git checkout feature/TICKET-ID-description` |
+| `Not on feature branch` | Switch to feature branch: `git checkout TICKET-ID-description` |
 | `No commits to push` | Make commits before creating PR |
 | `JIRA auth failed` | Check .env file for JIRA_EMAIL, JIRA_API_TOKEN, JIRA_BASE_URL |
 | `Rebase conflict` | Resolve conflicts manually, then `git rebase --continue` and re-run `/jira-pr` |
@@ -301,7 +301,7 @@ Upon successful execution:
 
 ### Basic usage (auto-detect ticket from branch)
 ```
-$ git checkout feature/CCU2-18882-add-health-check
+$ git checkout CCU2-18882-add-health-check
 $ /jira-pr
 
 ✅ PR Created (Draft)

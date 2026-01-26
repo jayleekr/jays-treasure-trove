@@ -1,9 +1,9 @@
 ---
-name: snt-ccu2-yocto:jira
+name: snt:jira
 description: "Jira integration for CCU2 project. Fetch issues by ID/JQL or create new issues from git changes with proper field prompts."
 ---
 
-# /snt-ccu2-yocto:jira - Jira Integration
+# /snt:jira - Jira Integration
 
 Jira API를 통해 CCU2 프로젝트 이슈 조회 및 생성.
 
@@ -11,11 +11,11 @@ Jira API를 통해 CCU2 프로젝트 이슈 조회 및 생성.
 
 ```bash
 # 조회
-/snt-ccu2-yocto:jira <issue-id | jql-query>
+/snt:jira <issue-id | jql-query>
 
 # 생성
-/snt-ccu2-yocto:jira --create [options]
-/snt-ccu2-yocto:jira --from-changes   # git 변경사항 기반 생성
+/snt:jira --create [options]
+/snt:jira --from-changes   # git 변경사항 기반 생성
 ```
 
 ### Options
@@ -37,38 +37,38 @@ Jira API를 통해 CCU2 프로젝트 이슈 조회 및 생성.
 
 ```bash
 # 단일 이슈 조회
-/snt-ccu2-yocto:jira CCU2-12345
+/snt:jira CCU2-12345
 
 # JQL 쿼리로 여러 이슈 검색
-/snt-ccu2-yocto:jira "project=CCU2 AND status='In Progress'"
+/snt:jira "project=CCU2 AND status='In Progress'"
 
 # 특정 컴포넌트 이슈 검색
-/snt-ccu2-yocto:jira "project=CCU2 AND component=kernel"
+/snt:jira "project=CCU2 AND component=kernel"
 
 # spec 형식으로 변환
-/snt-ccu2-yocto:jira CCU2-12345 --to-spec
+/snt:jira CCU2-12345 --to-spec
 
 # 파일로 저장
-/snt-ccu2-yocto:jira CCU2-12345 --export claudedocs/CCU2-12345-spec.yaml
+/snt:jira CCU2-12345 --export claudedocs/CCU2-12345-spec.yaml
 ```
 
 ### Creation Examples
 
 ```bash
 # git 변경사항 기반으로 이슈 생성 (가장 일반적)
-/snt-ccu2-yocto:jira --from-changes
+/snt:jira --from-changes
 
 # 미리보기만 (실제 생성하지 않음)
-/snt-ccu2-yocto:jira --from-changes --dry-run
+/snt:jira --from-changes --dry-run
 
 # 컴포넌트 지정하여 생성
-/snt-ccu2-yocto:jira --from-changes --component kernel
+/snt:jira --from-changes --component kernel
 
 # 이슈 타입 지정
-/snt-ccu2-yocto:jira --from-changes --type Story
+/snt:jira --from-changes --type Story
 
 # 수동으로 이슈 생성 (interactive)
-/snt-ccu2-yocto:jira --create --component kernel --type Task
+/snt:jira --create --component kernel --type Task
 ```
 
 ## Configuration
@@ -243,7 +243,7 @@ issue:
 
 ### Spec Format (`--to-spec`)
 
-Jira 이슈를 `/snt-ccu2-yocto:spec` 형식으로 자동 변환:
+Jira 이슈를 spec 형식으로 자동 변환:
 
 ```yaml
 spec:
@@ -284,91 +284,43 @@ spec:
 
 ```bash
 # 진행 중인 이슈
-/snt-ccu2-yocto:jira "project=CCU2 AND status='In Progress'"
+/snt:jira "project=CCU2 AND status='In Progress'"
 
 # 리뷰 대기 중
-/snt-ccu2-yocto:jira "project=CCU2 AND status='In Review'"
+/snt:jira "project=CCU2 AND status='In Review'"
 
 # 이번 스프린트
-/snt-ccu2-yocto:jira "project=CCU2 AND sprint in openSprints()"
+/snt:jira "project=CCU2 AND sprint in openSprints()"
 ```
 
 ### By Component
 
 ```bash
 # 커널 관련
-/snt-ccu2-yocto:jira "project=CCU2 AND component=kernel"
+/snt:jira "project=CCU2 AND component=kernel"
 
 # 컨테이너 관련
-/snt-ccu2-yocto:jira "project=CCU2 AND component in (podman, docker, containerd)"
+/snt:jira "project=CCU2 AND component in (podman, docker, containerd)"
 ```
 
 ### By Assignee
 
 ```bash
 # 나에게 할당된 이슈
-/snt-ccu2-yocto:jira "project=CCU2 AND assignee=currentUser()"
+/snt:jira "project=CCU2 AND assignee=currentUser()"
 
 # 특정 담당자
-/snt-ccu2-yocto:jira "project=CCU2 AND assignee='jay.lee@sonatus.com'"
+/snt:jira "project=CCU2 AND assignee='jay.lee@sonatus.com'"
 ```
 
 ### By Label/Version
 
 ```bash
 # 특정 라벨
-/snt-ccu2-yocto:jira "project=CCU2 AND labels=cgroupv2"
+/snt:jira "project=CCU2 AND labels=cgroupv2"
 
 # 특정 버전
-/snt-ccu2-yocto:jira "project=CCU2 AND fixVersion='2.5.0'"
-```
-
-## Pipeline Integration
-
-Jira 이슈를 직접 pipeline에 전달:
-
-```bash
-# Jira 이슈 기반 전체 파이프라인
-/snt-ccu2-yocto:pipeline CCU2-12345
-
-# 위 명령은 내부적으로:
-# 1. /snt-ccu2-yocto:jira CCU2-12345 --to-spec
-# 2. /snt-ccu2-yocto:implement <spec>
-# 3. /snt-ccu2-yocto:build
-# 4. /snt-ccu2-yocto:test
-```
-
-## Workflow Examples
-
-### Example 1: Single Issue to Implementation
-
-```bash
-# 1. Jira에서 요구사항 조회
-/snt-ccu2-yocto:jira CCU2-12345
-
-# 2. spec 형식으로 변환
-/snt-ccu2-yocto:jira CCU2-12345 --to-spec --export claudedocs/CCU2-12345-spec.yaml
-
-# 3. 구현
-/snt-ccu2-yocto:implement claudedocs/CCU2-12345-spec.yaml
-
-# 4. 빌드 & 테스트
-/snt-ccu2-yocto:build
-/snt-ccu2-yocto:test
-```
-
-### Example 2: Sprint Issues Overview
-
-```bash
-# 이번 스프린트 이슈 목록 조회
-/snt-ccu2-yocto:jira "project=CCU2 AND sprint in openSprints() AND status='To Do'" --format summary
-```
-
-### Example 3: Direct Pipeline from Jira
-
-```bash
-# Jira 이슈에서 바로 전체 파이프라인 실행
-/snt-ccu2-yocto:pipeline CCU2-12345
+/snt:jira "project=CCU2 AND fixVersion='2.5.0'"
 ```
 
 ## Error Handling
@@ -387,7 +339,6 @@ Jira 이슈를 직접 pipeline에 전달:
 - Issue ID 및 JQL 쿼리 지원
 - 전체 필드 (comments, attachments, links) 조회
 - spec 형식으로 자동 변환
-- Pipeline과 통합 사용
 - git 변경사항 분석하여 이슈 자동 생성
 - 새 이슈 생성 (Task, Bug, Story 등)
 

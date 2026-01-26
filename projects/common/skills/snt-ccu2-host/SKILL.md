@@ -18,6 +18,30 @@ JIRA 티켓부터 테스트까지 CCU-2.0 개발 파이프라인을 자동화하
 - CCU-2.0 컴포넌트 빌드 및 테스트 자동화
 - `/snt-ccu2-host` 명령어 호출
 
+## When NOT to Use This Skill (Deactivation)
+
+**Yocto 환경에서는 이 스킬이 비활성화됩니다:**
+
+다음 조건 중 하나라도 충족되면 `/snt-ccu2-yocto` 스킬을 대신 사용하세요:
+
+| Condition | Detection |
+|-----------|-----------|
+| 경로에 `CCU_GEN2.0_SONATUS` 포함 | `$PWD` 또는 `$CLAUDE_PROJECT_DIR` 확인 |
+| `mobis/` 디렉토리 존재 | `test -d mobis/` |
+| `lge/` 디렉토리 존재 | `test -d lge/` |
+| `run-dev-container.sh` 존재 | `test -f run-dev-container.sh` |
+| `mobis/build.py` 존재 | `test -f mobis/build.py` |
+
+**Yocto 환경에서 사용할 명령:**
+- `/snt-ccu2-yocto:build` - Yocto 빌드 오케스트레이션
+- `/snt-ccu2-yocto:pipeline` - 전체 파이프라인
+- `/snt-ccu2-yocto:spec` - 스펙 생성
+
+**Host 환경 판별:**
+- 경로에 `ccu-2.0` 포함 (Yocto 마커 없음)
+- `build.py` 가 프로젝트 루트에 직접 존재 (mobis/ 아님)
+- CMake 기반 빌드 시스템 (`CMakeLists.txt` 존재)
+
 ## Prerequisites
 
 ### Environment Setup

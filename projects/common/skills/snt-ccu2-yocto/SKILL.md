@@ -130,6 +130,7 @@ Docker 컨테이너에서 bitbake 빌드 실행.
 빌드 범위 결정:
 - **MODULE**: 특정 레시피만 빌드 (`-m linux-s32`)
 - **FULL**: 전체 이미지 빌드 (`-ncpb`)
+- **BRANCH**: 특정 Git 브랜치에서 빌드 (`--branch <name>`)
 
 실행 예시:
 ```bash
@@ -141,6 +142,27 @@ cd mobis/
 ./build.py -m linux-s32 -c cleansstate  # 클린
 ./build.py -ncpb -j 16 -p 16            # 전체 빌드
 ```
+
+#### Branch Build Mode (브랜치 빌드 모드)
+특정 Git 브랜치에서 Sonatus 컴포넌트를 빌드.
+
+**사용법**:
+```bash
+/snt-ccu2-yocto:build --module container-manager --branch CCU2-16964-feature
+/snt-ccu2-yocto:build -m vam -b feature-branch --keep-branch
+```
+
+**워크플로우**:
+1. Recipe 파일 검색 및 백업 (`.bb.bak`)
+2. `SNT_BRANCH ?= "master"` → `SNT_BRANCH = "branch-name"` 수정
+3. `cleansstate` 실행 (캐시 무효화)
+4. 빌드 실행
+5. Recipe 복원 (기본) 또는 유지 (`--keep-branch`)
+
+**지원 컴포넌트**:
+- container-manager, vam, dpm, diagnostic-manager, ethnm
+- libsntxx, libsnt-vehicle, libsnt-ehal, libsnt-cantp
+- vcc, vdc, soa, mqtt-middleware, container-app
 
 Reference: `references/build-workflow.md`
 
@@ -210,6 +232,23 @@ curl -s -u "${JIRA_EMAIL}:${JIRA_API_TOKEN}" \
 - `-p, --parallel` - 병렬 레시피 수
 - `-ncpb` - 전체 이미지 빌드
 - `--dry-run` - 명령만 출력
+
+### 브랜치 빌드 스크립트
+```bash
+# 특정 브랜치에서 빌드
+.claude/commands/snt-ccu2-yocto/scripts/yocto-build.sh --module container-manager --branch CCU2-16964-feature
+
+# 빌드 후 레시피 유지
+.claude/commands/snt-ccu2-yocto/scripts/yocto-build.sh -m vam -b feature-branch --keep-branch
+
+# LGE Tier 빌드
+.claude/commands/snt-ccu2-yocto/scripts/yocto-build.sh --module dpm --branch hotfix --tier lge
+```
+
+브랜치 빌드 옵션:
+- `--branch, -b` - Git 브랜치 이름
+- `--keep-branch, -k` - 빌드 후 레시피 복원 안함
+- `--tier, -t` - 대상 Tier (mobis/lge)
 
 ### Docker 컨테이너
 ```bash
@@ -312,7 +351,7 @@ Overall: PASSED ✅
 | `/snt-ccu2-yocto:implement` | 레시피/설정 구현 |
 | `/snt-ccu2-yocto:build` | Docker 빌드 실행 |
 | `/snt-ccu2-yocto:test` | 테스트 파이프라인 |
-| `/snt-ccu2-yocto:jira` | JIRA 이슈 조회/생성 |
+| `/snt:jira` | JIRA 이슈 조회/생성 |
 
 ## Version History
 

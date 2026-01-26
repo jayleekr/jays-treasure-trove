@@ -30,7 +30,7 @@ This project uses centralized Claude configuration from `jays-treasure-trove`.
 | `/snt-ccu2-yocto:spec` | Generate specification |
 | `/snt-ccu2-yocto:implement` | Implement recipes/configs |
 | `/snt-ccu2-yocto:test` | Run test pipeline |
-| `/snt-ccu2-yocto:jira` | JIRA integration |
+| `/snt:jira` | JIRA integration |
 
 ### Host Commands (ccu-2.0)
 | Command | Description |

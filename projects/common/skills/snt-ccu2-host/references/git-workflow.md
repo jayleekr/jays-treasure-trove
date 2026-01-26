@@ -4,16 +4,14 @@
 
 ### 브랜치 명명 규칙
 ```
-feature/<TICKET_ID>-<short-description>
-bugfix/<TICKET_ID>-<short-description>
-hotfix/<TICKET_ID>-<short-description>
+<TICKET_ID>-<short-description>
 ```
 
 예시:
 ```
-feature/CCU2-17945-container-health-check
-bugfix/SEB-1234-fix-policy-parser
-hotfix/CRM-567-urgent-security-fix
+CCU2-17945-container-health-check
+SEB-1234-fix-policy-parser
+CRM-567-urgent-security-fix
 ```
 
 ### 메인 브랜치
@@ -31,7 +29,7 @@ git checkout master
 git pull origin master
 
 # Feature 브랜치 생성
-git checkout -b feature/<TICKET_ID>-<description>
+git checkout -b <TICKET_ID>-<description>
 ```
 
 ### 2. 개발 중
@@ -53,7 +51,7 @@ git commit -m "[<TICKET_ID>] <description>"
 
 ```bash
 # 처음 푸시 (upstream 설정)
-git push -u origin feature/<TICKET_ID>-<description>
+git push -u origin <TICKET_ID>-<description>
 
 # 이후 푸시
 git push
@@ -172,7 +170,7 @@ git checkout master
 git pull origin master
 
 # feature 브랜치로 돌아가서 rebase
-git checkout feature/<branch>
+git checkout <TICKET_ID>-<branch>
 git rebase master
 ```
 
@@ -207,7 +205,7 @@ git rebase -i HEAD~5  # after push, NO!
 ### 해야 할 것
 ```bash
 # ✅ 항상 feature 브랜치 사용
-git checkout -b feature/<ticket>
+git checkout -b <TICKET_ID>-<description>
 
 # ✅ 커밋 전 diff 확인
 git diff

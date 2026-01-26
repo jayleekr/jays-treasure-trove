@@ -1,8 +1,18 @@
 ---
-description: Build CCU-2.0 component using build.py with variant management
+description: "[DEPRECATED] Use /snt-ccu2-yocto:build or /snt-ccu2-host:build instead"
 ---
 
-# Build Component Command
+# Build Component Command (DEPRECATED)
+
+> **WARNING**: This command is deprecated and may have incorrect information.
+>
+> Use the environment-specific build commands instead:
+> - **Yocto environment** (`CCU_GEN2.0_SONATUS`): `/snt-ccu2-yocto:build`
+> - **Host environment** (`ccu-2.0`): `/snt-ccu2-host:build`
+
+---
+
+## Legacy Documentation (for reference only)
 
 Build CCU-2.0 components using `./build.py` with intelligent defaults and automotive variant awareness.
 

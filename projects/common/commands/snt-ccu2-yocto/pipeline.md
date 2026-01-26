@@ -24,6 +24,10 @@ CCU_GEN2.0_SONATUS 프로젝트를 위한 전체 개발 파이프라인 오케�
 
 | Option | Description |
 |--------|-------------|
+| `--init` | Run init.py first (repo sync) |
+| `--init-force` | Force re-init (removes .repo) |
+| `--tier <name>` | Tier type for init (LGE, MOBIS) |
+| `--version <name>` | Vehicle version for init |
 | `--jql <query>` | JQL 쿼리로 이슈 검색 후 순차 처리 |
 | `--skip-jira` | Jira 조회 건너뛰기 (텍스트 요구사항 사용) |
 | `--skip-build` | 빌드 단계 건너뛰기 |
@@ -40,6 +44,12 @@ CCU_GEN2.0_SONATUS 프로젝트를 위한 전체 개발 파이프라인 오케�
 # 텍스트 요구사항으로 전체 파이프라인 실행
 /snt-ccu2-yocto:pipeline "cgroupv2 지원 추가"
 
+# Init 포함 (repo sync 후 빌드)
+/snt-ccu2-yocto:pipeline --init --tier MOBIS --version qy2 "새 기능 구현"
+
+# Init 강제 재실행 포함
+/snt-ccu2-yocto:pipeline --init-force --tier MOBIS --version qy2 CCU2-12345
+
 # Jira 이슈 + 빌드 제외 (명세+구현만)
 /snt-ccu2-yocto:pipeline CCU2-12345 --skip-build
 
@@ -53,27 +63,69 @@ CCU_GEN2.0_SONATUS 프로젝트를 위한 전체 개발 파이프라인 오케�
 ## Pipeline Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                       PIPELINE EXECUTION                             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌────────┐    ┌─────────┐    ┌───────────┐    ┌───────┐    ┌─────┐ │
-│  │  JIRA  │───▶│  SPEC   │───▶│ IMPLEMENT │───▶│ BUILD │───▶│TEST │ │
-│  │(opt)   │    │         │    │           │    │       │    │     │ │
-│  └────────┘    └─────────┘    └───────────┘    └───────┘    └─────┘ │
-│       │             │               │               │           │    │
-│       ▼             ▼               ▼               ▼           ▼    │
-│   Jira API     명세 YAML      파일 생성/수정   Docker 빌드  검증 리포트│
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          PIPELINE EXECUTION                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────┐   ┌────────┐   ┌─────────┐   ┌───────────┐   ┌───────┐   ┌─────┐  │
+│  │ INIT │──▶│  JIRA  │──▶│  SPEC   │──▶│ IMPLEMENT │──▶│ BUILD │──▶│TEST │  │
+│  │(opt) │   │ (opt)  │   │         │   │           │   │       │   │     │  │
+│  └──────┘   └────────┘   └─────────┘   └───────────┘   └───────┘   └─────┘  │
+│      │           │             │               │               │        │    │
+│      ▼           ▼             ▼               ▼               ▼        ▼    │
+│  repo sync   Jira API     명세 YAML     파일 생성/수정   Docker 빌드  검증   │
+│  build_info                                                                   │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
 
 Input Detection:
+├── --init 옵션 → Init (repo sync) → 다음 단계
 ├── CCU2-XXXXX 형식 → Jira API 조회 → SPEC
 ├── JQL 쿼리 → Jira 검색 → 순차 처리
 └── 텍스트 요구사항 → 직접 SPEC
 ```
 
 ## Phase Details
+
+### Phase -1: INIT (프로젝트 초기화, Optional)
+
+**Trigger:** `--init` 또는 `--init-force` 옵션
+
+**Process:**
+1. Docker 컨테이너 환경 확인
+2. 버전 설정 로드 (`info/repo_info.json`)
+3. `repo init` 및 `repo sync` 실행
+4. Symbolic links 생성
+5. `build_info.json` 저장
+6. BL2 버전 호환성 검사 (MOBIS)
+
+**Script:**
+```bash
+# Located at: .claude/commands/snt-ccu2-yocto/scripts/yocto-init.sh
+.claude/commands/snt-ccu2-yocto/scripts/yocto-init.sh --tier MOBIS --version qy2
+.claude/commands/snt-ccu2-yocto/scripts/yocto-init.sh --tier MOBIS --version qy2 --force
+```
+
+**Direct Python:**
+```bash
+# Inside Docker container
+python3 init.py -t MOBIS -v qy2
+python3 init.py -t MOBIS -v qy2 -f  # Force
+python3 init.py -t MOBIS -v qy2 -msb CCU2-18227-podman  # Custom branch
+```
+
+**Output:**
+- `{tier}/build_info.json` - Build configuration
+- `{tier}/build.py` → symlink
+- `{tier}/config.py` → symlink
+- Yocto layers synced
+
+**Skill:** `/snt-ccu2-yocto:init`
+
+**Important Notes:**
+- Must run inside Docker container (`./run-dev-container.sh`)
+- MOBIS `custom_mcu: true` uses prebuilt `customs/MOBIS/{version}/flash.bin`
+- Check BL2 version compatibility before build
 
 ### Phase 0: JIRA (요구사항 조회, Optional)
 
@@ -94,7 +146,7 @@ curl -s -u "${JIRA_EMAIL}:${JIRA_API_TOKEN}" \
 
 **Output:** Jira 이슈 데이터 → SPEC 단계로 전달
 
-**Skill:** `/snt-ccu2-yocto:jira`
+**Skill:** `/snt:jira`
 
 ```yaml
 jira_issue:
@@ -295,7 +347,8 @@ The build script automatically handles Docker container execution:
 
 | Command | Description |
 |---------|-------------|
-| `/snt-ccu2-yocto:jira` | Jira 이슈 조회 |
+| `/snt-ccu2-yocto:init` | 프로젝트 초기화 (repo sync) |
+| `/snt:jira` | Jira 이슈 조회 |
 | `/snt-ccu2-yocto:spec` | 명세 생성만 |
 | `/snt-ccu2-yocto:implement` | 구현만 |
 | `/snt-ccu2-yocto:build` | 빌드만 |
@@ -330,6 +383,139 @@ triggers:
 - 프로덕션 환경 직접 배포
 - Git commit/push 자동화 (사용자 확인 필요)
 - 빌드 시스템 설정 변경
+
+## Fully Automated Pipeline (Docker Detached Mode)
+
+### Key Discovery
+
+Claude sandbox blocks HOST background processes, but `docker exec -d` runs INSIDE the container:
+
+| Approach | Result |
+|----------|--------|
+| `Bash(run_in_background=True)` | ❌ EACCES |
+| **`docker exec -d`** | ✅ **Works!** |
+
+### Fully Automated Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  FULLY AUTOMATED PIPELINE (No User Intervention)                     │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────┐   ┌────────┐   ┌─────────┐   ┌───────────┐   ┌──────┐    │
+│  │ JIRA │──▶│  SPEC  │──▶│IMPLEMENT│──▶│   BUILD   │──▶│ TEST │    │
+│  │      │   │        │   │         │   │docker -d  │   │      │    │
+│  └──────┘   └────────┘   └─────────┘   └───────────┘   └──────┘    │
+│      │           │             │               │             │       │
+│      ▼           ▼             ▼               ▼             ▼       │
+│  Claude      Claude        Claude          Claude        Claude      │
+│  executes    executes      executes     docker exec -d   executes    │
+│                                          (background)                │
+│                                               │                      │
+│                                               ▼                      │
+│                                    ┌─────────────────┐              │
+│                                    │  Status File    │              │
+│                                    │  (10 lines)     │              │
+│                                    └─────────────────┘              │
+│                                               │                      │
+│                                               ▼                      │
+│                                    ┌─────────────────┐              │
+│                                    │ /build-status   │              │
+│                                    │ (~200 tokens)   │              │
+│                                    └─────────────────┘              │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Automated Pipeline Steps
+
+**Phase 0-2: JIRA + SPEC + IMPLEMENT** (Claude executes directly)
+```
+/snt-ccu2-yocto:pipeline CCU2-12345
+→ Claude fetches JIRA, generates spec, implements files
+```
+
+**Phase 3: BUILD** (Claude executes via docker exec -d)
+```bash
+# Claude executes this automatically:
+docker exec -d -u ${USER} "$CONTAINER" bash -c "
+  export PYTHONPATH=...
+  ./build.py main -ncpb -j 16 -p 16 -r > ${LOG_FILE} 2>&1 && \
+  sed -i 's/STATUS=RUNNING/STATUS=SUCCESS/' ${STATUS_FILE}
+"
+# Returns immediately with status file path
+```
+
+**Phase 4: MONITOR** (User asks Claude to check)
+```
+User: "Check build status"
+Claude: /snt-ccu2-yocto:build-status
+→ "RUNNING, 45 min, 0 errors" (~200 tokens)
+```
+
+**Phase 5: ANALYZE** (Claude analyzes on completion)
+```
+User: "Analyze the build"
+Claude: /snt-ccu2-yocto:analyze-build --latest
+→ Detailed summary (~2K tokens)
+```
+
+**Phase 6: TEST** (After successful build)
+```
+/snt-ccu2-yocto:test
+```
+
+### Status Checking
+
+**Quick status (~200 tokens):**
+```
+/snt-ccu2-yocto:build-status
+```
+
+**Detailed analysis (~2K tokens):**
+```
+/snt-ccu2-yocto:analyze-build --latest
+```
+
+### Example: Fully Automated Pipeline Execution
+
+```
+User: /snt-ccu2-yocto:pipeline CCU2-12345
+
+Claude:
+## Phase 0: JIRA
+Fetching CCU2-12345... ✅
+
+## Phase 1: SPEC
+Generating specification... ✅
+
+## Phase 2: IMPLEMENT
+Creating files... ✅
+
+## Phase 3: BUILD
+Starting build via docker exec -d... ✅
+Build running in background.
+Status file: claudedocs/build-logs/mobis-full-20260108_161500.status
+
+## Build Status
+| Property | Value |
+|----------|-------|
+| Status | RUNNING |
+| Type | full |
+| Tier | mobis |
+
+Ask "check build status" for progress updates.
+After completion, ask "analyze the build" for detailed results.
+```
+
+### Token Efficiency
+
+| Operation | Tokens |
+|-----------|--------|
+| Pipeline phases 0-2 | ~5K |
+| Build start | ~300 |
+| Status check (×N) | ~200 each |
+| Full analysis | ~2K |
+| **Total** | **~8K** |
 
 ## Error Handling
 
