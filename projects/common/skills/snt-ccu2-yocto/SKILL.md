@@ -1,14 +1,27 @@
 ---
 name: snt-ccu2-yocto
 description: Yocto/Bitbake 기반 CCU2 임베디드 리눅스 개발 파이프라인. JIRA 연동, 레시피 작성, Docker 빌드, 이미지 검증 자동화. "yocto", "bitbake", "recipe", "임베디드" 키워드시 활성화
-version: 1.0.0
+version: 2.0.0
 author: CCU2 Team
 tags: [yocto, bitbake, embedded, linux, recipe, pipeline]
+# Claude Code Warm Strategy 2026.2 적용
+memory: project
+allowed-tools: Read, Grep, Glob, Bash(./build.py *), Bash(./run-dev-container.sh *), Bash(git *), Bash(find *), Bash(cat *)
 ---
 
 # SNT-CCU2-YOCTO Pipeline Agent
 
 JIRA 티켓부터 이미지 빌드까지 CCU2 Yocto 개발 파이프라인을 자동화하는 스킬.
+
+## 📊 Dynamic Context (Auto-injected)
+
+**Repository State**:
+- Repo info: !`cat info/repo_info.json 2>/dev/null | head -5 || echo "Not initialized"`
+- Current branch: !`git branch --show-current 2>/dev/null || echo "Unknown"`
+- Modified files: !`git status --short 2>/dev/null | head -10 || echo "Not a git repo"`
+
+**Last Build Status**:
+!`cat build.log 2>/dev/null | tail -5 | grep -E "SUCCESS|FAILED|ERROR" || echo "No recent build"`
 
 ## When to Use This Skill
 
