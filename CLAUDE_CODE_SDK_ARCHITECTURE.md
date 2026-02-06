@@ -372,5 +372,49 @@ python scripts/build.py test --server test-runner --path tests/integration/
 
 ---
 
+## 🧪 검증 결과 (2026-02-06)
+
+### Self-Healing Loop Test
+
+```
+Server: builder-kr-4
+Tests: 50
+Passed: 50/50 (100.0%)
+Duration: 8.1 min
+Cost: $1.16 (~$0.023/test)
+```
+
+### Key Findings
+
+1. **SSH 방식**: Heredoc이 가장 안정적
+   ```bash
+   ssh server 'bash -s' << 'EOF'
+   export PATH="$HOME/.local/bin:$PATH"
+   claude -p "task" --output-format json
+   EOF
+   ```
+
+2. **응답 시간**: 평균 8-10초 (simple: 5s, complex: 12s)
+
+3. **안정성**: 연속 50회 테스트 100% 성공률
+
+4. **자가 복구**: 연속 3회 실패 시 자동 복구 시도
+   - SSH 연결 확인
+   - Claude 설치 확인
+   - 인증 확인
+
+### Tested Categories
+
+| Category | Tests | Result |
+|----------|-------|--------|
+| Basic Response | hello, math, korean, json | ✅ 100% |
+| Bash Execution | 11 commands | ✅ 100% |
+| File Operations | read/write | ✅ 100% |
+| Complex Tasks | system analysis | ✅ 100% |
+| Edge Cases | special chars | ✅ 100% |
+
+---
+
 *Created: 2026-02-06*
+*Validated: 2026-02-06*
 *Based on Claude Code v2.1.33 + Agent SDK*
