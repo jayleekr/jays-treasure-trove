@@ -21,7 +21,13 @@ JIRA 티켓부터 이미지 빌드까지 CCU2 Yocto 개발 파이프라인을 �
 - Modified files: !`git status --short 2>/dev/null | head -10 || echo "Not a git repo"`
 
 **Last Build Status**:
-!`cat build.log 2>/dev/null | tail -5 | grep -E "SUCCESS|FAILED|ERROR" || echo "No recent build"`
+!`ls -t claudedocs/build-logs/*.status 2>/dev/null | head -1 | xargs cat 2>/dev/null | grep -E "^(STATUS|TYPE|TIER)" | tr '\n' ' ' || echo "No recent build"`
+
+**Docker Container**:
+!`docker ps --filter "name=.*CCU_GEN2.0_SONATUS" --format "✅ {{.Names}} (up {{.RunningFor}})" 2>/dev/null | head -1 || echo "❌ No container running"`
+
+**Disk Space**:
+!`df -h . 2>/dev/null | tail -1 | awk '{print $4 " available (" $5 " used)"}' || echo "Unknown"`
 
 ## When to Use This Skill
 

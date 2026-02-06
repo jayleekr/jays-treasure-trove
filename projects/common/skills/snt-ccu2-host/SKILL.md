@@ -1,12 +1,25 @@
 ---
 name: snt-ccu2-host
 description: JIRA 티켓 기반 CCU-2.0 구현 파이프라인. 요구사항 추출, 코드 구현, 빌드, 테스트를 자동화. "파이프라인", "워크플로우", "티켓 구현" 키워드시 활성화
-version: 1.0.0
+version: 2.0.0
 author: CCU-2.0 Team
 tags: [pipeline, jira, host, implementation, automation]
+# Claude Code Warm Strategy 2026.2
+memory: project
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(./build.py *), Bash(./run-dev-container.sh *), Bash(git *)
 ---
 
 # SNT-CCU2-HOST Pipeline Agent
+
+## 📊 Project State (Auto-injected)
+
+**Git Status**:
+- Branch: !`git branch --show-current 2>/dev/null || echo "unknown"`
+- Modified files: !`git status --short 2>/dev/null | wc -l | tr -d ' '` files
+- Last commit: !`git log -1 --format="%s" 2>/dev/null | head -c 50 || echo "unknown"`
+
+**Build Environment**:
+!`docker ps --filter "name=.*ccu-2.0" --format "✅ {{.Names}}" 2>/dev/null | head -1 || echo "❌ No dev container"`
 
 JIRA 티켓부터 테스트까지 CCU-2.0 개발 파이프라인을 자동화하는 스킬.
 
