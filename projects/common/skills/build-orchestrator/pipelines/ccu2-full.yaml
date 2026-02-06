@@ -1,0 +1,65 @@
+# CCU2 Full Build Pipeline
+# Usage: ./scripts/orchestrator.py pipelines/ccu2-full.yaml
+
+name: ccu2-full-build
+description: Complete CCU2 build pipeline with Yocto, Host, and Tests
+
+stages:
+  # Stage 1: Yocto Image Build (독립적으로 시작)
+  - name: yocto-image
+    server: yocto-builder
+    command: "./build.py -ncpb -j 16 -p 16 -r"
+    workdir: /workspace/CCU_GEN2.0_SONATUS.manifest/mobis
+    timeout: 3h
+    depends_on: []
+  
+  # Stage 2: Host Builds (Yocto와 독립적으로 병렬 시작)
+  - name: host-container-manager
+    server: ccu2-builder
+    command: "./build.py --module container-manager"
+    workdir: /workspace/ccu-2.0
+    timeout: 30m
+    depends_on: []
+  
+  - name: host-vam
+    server: ccu2-builder
+    command: "./build.py --module vam"
+    workdir: /workspace/ccu-2.0
+    timeout: 30m
+    depends_on: []
+  
+  - name: host-dpm
+    server: ccu2-builder
+    command: "./build.py --module dpm"
+    workdir: /workspace/ccu-2.0
+    timeout: 30m
+    depends_on: []
+  
+  # Stage 3: Integration Tests (Host 빌드 완료 후)
+  - name: test-container
+    server: test-runner
+    command: "pytest -v tests/container/ --tb=short"
+    workdir: /workspace/snt-integration-tests
+    timeout: 1h
+    depends_on:
+      - host-container-manager
+  
+  - name: test-vam
+    server: test-runner
+    command: "pytest -v tests/vam/ --tb=short"
+    workdir: /workspace/snt-integration-tests
+    timeout: 1h
+    depends_on:
+      - host-vam
+
+# Notification settings (optional, uses config.yaml defaults if not specified)
+notifications:
+  on_start: true
+  on_stage_complete: true
+  on_failure: true
+  on_success: true
+
+# Retry policy
+retry:
+  max_attempts: 2
+  on_failure_only: true

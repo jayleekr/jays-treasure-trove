@@ -1,0 +1,25 @@
+# Quick Build Pipeline - Host Only
+# Usage: ./scripts/orchestrator.py pipelines/quick-build.yaml
+
+name: quick-build
+description: Quick host build for rapid iteration
+
+stages:
+  - name: container-manager
+    server: ccu2-builder
+    command: "./build.py --module container-manager --clean"
+    workdir: /workspace/ccu-2.0
+    timeout: 30m
+    depends_on: []
+  
+  - name: unit-tests
+    server: ccu2-builder
+    command: "./build.py --module container-manager --tests"
+    workdir: /workspace/ccu-2.0
+    timeout: 15m
+    depends_on:
+      - container-manager
+
+notifications:
+  on_failure: true
+  on_success: true
